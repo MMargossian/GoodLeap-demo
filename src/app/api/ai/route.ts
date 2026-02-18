@@ -219,7 +219,13 @@ export async function POST(request: NextRequest) {
       throw new Error("No text response from Claude");
     }
 
-    const insights: AIInsight[] = JSON.parse(textBlock.text);
+    // Strip markdown code fences if present
+    let rawText = textBlock.text.trim();
+    if (rawText.startsWith("```")) {
+      rawText = rawText.replace(/^```(?:json)?\s*/, "").replace(/```\s*$/, "").trim();
+    }
+
+    const insights: AIInsight[] = JSON.parse(rawText);
 
     return NextResponse.json({
       insights,
