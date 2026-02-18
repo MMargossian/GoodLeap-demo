@@ -25,6 +25,7 @@ import {
   DollarSign,
   CreditCard,
 } from "lucide-react";
+import { useFundingData } from "@/hooks/useConvexData";
 
 const MONTHS = [
   "January",
@@ -43,6 +44,14 @@ const MONTHS = [
 
 export default function FundingHealthPage() {
   const [period, setPeriod] = useState("December 2024");
+  const { fundingHealth, loanAmounts } = useFundingData();
+
+  const approvalRate = fundingHealth?.approval_rate ?? 59.5;
+  const pullThrough = fundingHealth?.sales_pull_through ?? 40.2;
+  const delinquencyRate = fundingHealth?.delinquency_rate ?? 0.8;
+  const paymentStatus = fundingHealth?.payment_status ?? "On Track";
+  const avgLoan = loanAmounts?.avg_loan ?? 10812;
+  const utilizationRate = loanAmounts?.utilization_rate ?? 35.8;
 
   return (
     <div className="space-y-8">
@@ -90,13 +99,13 @@ export default function FundingHealthPage() {
                 <p className="text-xs font-semibold tracking-wider text-purple-200 uppercase">
                   Approval Rate
                 </p>
-                <p className="text-3xl font-bold text-white mt-1">59.5%</p>
+                <p className="text-3xl font-bold text-white mt-1">{approvalRate}%</p>
               </div>
               <div className="rounded-lg bg-primary p-5">
                 <p className="text-xs font-semibold tracking-wider text-purple-200 uppercase">
                   Sales Pull-Through
                 </p>
-                <p className="text-3xl font-bold text-white mt-1">40.2%</p>
+                <p className="text-3xl font-bold text-white mt-1">{pullThrough}%</p>
                 <p className="text-xs text-purple-300 mt-1">(Funded / Submitted)</p>
               </div>
             </div>
@@ -165,13 +174,13 @@ export default function FundingHealthPage() {
                     4
                   </Badge>
                 </div>
-                <span className="text-sm font-semibold text-gray-900 text-right">0.8%</span>
+                <span className="text-sm font-semibold text-gray-900 text-right">{delinquencyRate}%</span>
               </div>
               {/* Payment performance */}
               <div className="flex items-center gap-2 pt-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
                 <span className="text-sm font-semibold text-gray-700">
-                  Payment Performance: On Track
+                  Payment Performance: {paymentStatus}
                 </span>
               </div>
               <p className="text-xs text-muted-foreground">
@@ -196,7 +205,7 @@ export default function FundingHealthPage() {
                   <p className="text-xs font-semibold tracking-wider text-purple-200 uppercase">
                     Average Funded
                   </p>
-                  <p className="text-2xl font-bold text-white mt-1">$10,812</p>
+                  <p className="text-2xl font-bold text-white mt-1">${avgLoan.toLocaleString()}</p>
                   <div className="flex items-center gap-1 mt-1">
                     <ArrowUp className="h-3 w-3 text-purple-200" />
                     <p className="text-xs text-purple-200">$50K from last quarter</p>
@@ -220,8 +229,8 @@ export default function FundingHealthPage() {
                       Loan Amount Utilization (%)
                     </p>
                   </div>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">35.8%</p>
-                  <Progress value={35.8} className="h-1.5 mt-2" />
+                  <p className="text-2xl font-bold text-gray-900 mt-1">{utilizationRate}%</p>
+                  <Progress value={utilizationRate} className="h-1.5 mt-2" />
                 </div>
               </div>
 

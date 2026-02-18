@@ -1,7 +1,13 @@
 "use client";
 
 import { ConvexProvider, ConvexReactClient } from "convex/react";
-import { ReactNode, useMemo } from "react";
+import { createContext, ReactNode, useContext, useMemo } from "react";
+
+const ConvexAvailableContext = createContext(false);
+
+export function useConvexAvailable() {
+  return useContext(ConvexAvailableContext);
+}
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   const client = useMemo(() => {
@@ -11,8 +17,16 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
   }, []);
 
   if (!client) {
-    return <>{children}</>;
+    return (
+      <ConvexAvailableContext.Provider value={false}>
+        {children}
+      </ConvexAvailableContext.Provider>
+    );
   }
 
-  return <ConvexProvider client={client}>{children}</ConvexProvider>;
+  return (
+    <ConvexAvailableContext.Provider value={true}>
+      <ConvexProvider client={client}>{children}</ConvexProvider>
+    </ConvexAvailableContext.Provider>
+  );
 }

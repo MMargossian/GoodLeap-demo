@@ -24,8 +24,33 @@ import {
   ArrowRight,
   ArrowUpRight,
 } from "lucide-react";
+import { useProjectHealthData } from "@/hooks/useConvexData";
+
+const defaultActions = [
+  { stage: "Docs Sent", action_text: "Follow up on Signature", project_count: 12, risk_level: "medium" },
+  { stage: "Contract Signed", action_text: "Submit NTP Request", project_count: 8, risk_level: "high" },
+  { stage: "Install Complete", action_text: "Request PTO", project_count: 15, risk_level: "low" },
+  { stage: "Approved", action_text: "Send Loan Docs", project_count: 5, risk_level: "low" },
+];
 
 export default function ProjectHealthPage() {
+  const { pipelineStages, expiringLoans, actionItems } = useProjectHealthData();
+
+  const expiringPct = expiringLoans?.expiring_pct ?? 39.0;
+  const expiredValue = expiringLoans?.expired_value ?? 135380;
+  const totalActionCount = actionItems.length > 0
+    ? actionItems.reduce((sum, a) => sum + a.project_count, 0)
+    : 40;
+
+  // Compute avg days to sign and sign-to-fund from pipeline stages
+  const contractSignedStage = pipelineStages.find((s) => s.stage === "Contract Signed");
+  const fundedStage = pipelineStages.find((s) => s.stage === "Funded");
+  const avgDaysToSign = contractSignedStage?.avg_days ?? 4.2;
+  const avgDaysSignToFund = fundedStage?.avg_days
+    ? (pipelineStages
+        .filter((s) => ["NTP", "Install Complete", "Funded"].includes(s.stage))
+        .reduce((sum, s) => sum + s.avg_days, 0)).toFixed(1)
+    : "12.6";
   return (
     <div className="space-y-8">
       {/* Page Header */}
@@ -106,7 +131,7 @@ export default function ProjectHealthPage() {
                 </Badge>
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-red-500" />
-                  <span className="text-3xl font-bold text-red-600">39.0%</span>
+                  <span className="text-3xl font-bold text-red-600">{expiringPct}%</span>
                 </div>
                 <p className="text-xs text-muted-foreground">Active Inventory (30 Days)</p>
               </div>
@@ -115,7 +140,7 @@ export default function ProjectHealthPage() {
                 <p className="text-xs font-semibold tracking-wider text-muted-foreground">
                   APPROVALS EXPIRED
                 </p>
-                <p className="text-2xl font-bold text-gray-900">$135,380</p>
+                <p className="text-2xl font-bold text-gray-900">${expiredValue.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">
                   Total value of expired approvals
                 </p>
@@ -140,7 +165,7 @@ export default function ProjectHealthPage() {
             <p className="text-xs font-semibold tracking-wider text-muted-foreground mb-1">
               AVG. DAYS TO SIGN
             </p>
-            <p className="text-4xl font-bold text-gray-900">4.2</p>
+            <p className="text-4xl font-bold text-gray-900">{avgDaysToSign}</p>
             <p className="text-xs text-muted-foreground mt-1">
               Time from docs sent to signature received
             </p>
@@ -149,7 +174,7 @@ export default function ProjectHealthPage() {
             <p className="text-xs font-semibold tracking-wider text-muted-foreground mb-1">
               AVG. DAYS SIGN TO FUND
             </p>
-            <p className="text-4xl font-bold text-gray-900">12.6</p>
+            <p className="text-4xl font-bold text-gray-900">{avgDaysSignToFund}</p>
             <p className="text-xs text-muted-foreground mt-1">
               Time from signature to project funding
             </p>
@@ -206,37 +231,22 @@ export default function ProjectHealthPage() {
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-2xl font-bold">40</span>
+                <span className="text-2xl font-bold">{totalActionCount}</span>
                 <ArrowUpRight className="h-5 w-5" />
               </div>
             </div>
 
             {/* 2x2 grid of action cards */}
             <div className="grid grid-cols-2 gap-3">
-              <ActionItemCard
-                stage="DOCS SENT"
-                actionText="Follow up on Signature"
-                projectCount={12}
-                riskLevel="medium"
-              />
-              <ActionItemCard
-                stage="CONTRACT SIGNED"
-                actionText="Submit NTP Request"
-                projectCount={8}
-                riskLevel="high"
-              />
-              <ActionItemCard
-                stage="INSTALL COMPLETE"
-                actionText="Request PTO"
-                projectCount={15}
-                riskLevel="low"
-              />
-              <ActionItemCard
-                stage="APPROVED"
-                actionText="Send Loan Docs"
-                projectCount={5}
-                riskLevel="low"
-              />
+              {(actionItems.length > 0 ? actionItems.slice(0, 4) : defaultActions).map((item, i) => (
+                <ActionItemCard
+                  key={i}
+                  stage={item.stage.toUpperCase()}
+                  actionText={item.action_text}
+                  projectCount={item.project_count}
+                  riskLevel={item.risk_level as "high" | "medium" | "low"}
+                />
+              ))}
             </div>
           </CardContent>
         </Card>

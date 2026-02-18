@@ -31,39 +31,7 @@ import {
   StaggerItem,
   PageTransition,
 } from "@/components/ui/animated";
-
-const kpiItems = [
-  {
-    label: "Projects",
-    value: "140",
-  },
-  {
-    label: "Avg Sale",
-    value: "$17,683",
-  },
-  {
-    label: "Total Revenue",
-    value: "$2,475,700",
-  },
-];
-
-const funnelItems = [
-  { label: "Conversion Rate", value: "22%" },
-  { label: "Pull-Through", value: "40.2%" },
-  { label: "Referral Conversion", value: "38.9%" },
-];
-
-const customerItems = [
-  { label: "Repeat Customers", value: "42%" },
-  { label: "Upsell Rate", value: "28%" },
-  { label: "Avg Install Length", value: "4.2 months" },
-];
-
-const operationsItems = [
-  { label: "Avg Sales Cycle", value: "34 days" },
-  { label: "Cancellations", value: "12" },
-  { label: "Target Attainment", value: "95.2%" },
-];
+import { useSalesData } from "@/hooks/useConvexData";
 
 function StatColumn({
   title,
@@ -93,6 +61,42 @@ function StatColumn({
 }
 
 export default function SalesPerformancePage() {
+  const { salesData } = useSalesData();
+
+  const revenue = salesData?.revenue ?? 2475700;
+  const projects = salesData?.projects ?? 140;
+  const avgSale = salesData?.avg_sale ?? 17683;
+  const conversionRate = salesData?.conversion_rate ?? 22;
+  const referralConversion = salesData?.referral_conversion ?? 38.9;
+  const repeatRate = salesData?.repeat_customer_rate ?? 42;
+  const upsellRate = salesData?.upsell_rate ?? 28;
+  const avgSalesCycle = salesData?.avg_sales_cycle ?? 34;
+  const cancellations = salesData?.cancellations ?? 12;
+  const avgInstallLength = salesData?.avg_install_length ?? 4.2;
+  const avgMonthly = Math.round(revenue / 12);
+  const targetAttainment = salesData ? ((revenue / salesData.target) * 100).toFixed(1) : "95.2";
+
+  const kpiItems = [
+    { label: "Projects", value: String(projects) },
+    { label: "Avg Sale", value: `$${avgSale.toLocaleString()}` },
+    { label: "Total Revenue", value: `$${revenue.toLocaleString()}` },
+  ];
+  const funnelItems = [
+    { label: "Conversion Rate", value: `${conversionRate}%` },
+    { label: "Pull-Through", value: "40.2%" },
+    { label: "Referral Conversion", value: `${referralConversion}%` },
+  ];
+  const customerItems = [
+    { label: "Repeat Customers", value: `${repeatRate}%` },
+    { label: "Upsell Rate", value: `${upsellRate}%` },
+    { label: "Avg Install Length", value: `${avgInstallLength} months` },
+  ];
+  const operationsItems = [
+    { label: "Avg Sales Cycle", value: `${avgSalesCycle} days` },
+    { label: "Cancellations", value: String(cancellations) },
+    { label: "Target Attainment", value: `${targetAttainment}%` },
+  ];
+
   return (
     <PageTransition>
       <div className="space-y-8">
@@ -107,9 +111,9 @@ export default function SalesPerformancePage() {
           <StaggerItem>
             <MetricCard
               title="Total Revenue"
-              value="$2,475,700"
+              value={`$${revenue.toLocaleString()}`}
               trend={3.9}
-              subtitle="140 Projects"
+              subtitle={`${projects} Projects`}
               icon={DollarSign}
             />
           </StaggerItem>
@@ -124,7 +128,7 @@ export default function SalesPerformancePage() {
           <StaggerItem>
             <MetricCard
               title="Avg Monthly"
-              value="$206,308"
+              value={`$${avgMonthly.toLocaleString()}`}
               subtitle="12-month average"
               icon={Calculator}
             />

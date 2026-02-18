@@ -21,35 +21,9 @@ import {
   StaggerItem,
   PageTransition,
 } from "@/components/ui/animated";
+import { useBenchmarkData } from "@/hooks/useConvexData";
 
-const summaryMetrics = [
-  {
-    label: "Overall Score",
-    value: "112%",
-    subtitle: "of Peer Average",
-    icon: Award,
-  },
-  {
-    label: "Metrics Above Peer",
-    value: "6/7",
-    subtitle: "metrics leading",
-    icon: BarChart3,
-  },
-  {
-    label: "Top Strength",
-    value: "Referral Conv.",
-    subtitle: "+13.9pp vs peer",
-    icon: Zap,
-  },
-  {
-    label: "Biggest Gap",
-    value: "Sales Cycle",
-    subtitle: "34 vs 42 days (better)",
-    icon: ShieldCheck,
-  },
-];
-
-const detailedComparison = [
+const defaultComparison = [
   { metric: "Conversion Rate", contractor: "22%", peer: "18%", diff: "+4pp", above: true },
   { metric: "Avg Sale", contractor: "$17.7K", peer: "$15.2K", diff: "+$2.5K", above: true },
   { metric: "Referral Rate", contractor: "38.9%", peer: "25.0%", diff: "+13.9pp", above: true },
@@ -59,7 +33,72 @@ const detailedComparison = [
   { metric: "NPS Score", contractor: "58", peer: "52", diff: "+6", above: true },
 ];
 
+function formatBenchmarkValue(metricName: string, value: number): string {
+  if (metricName === "Avg Sale") return `$${(value / 1000).toFixed(1)}K`;
+  if (metricName === "Avg Sales Cycle") return `${value} days`;
+  if (metricName === "NPS Score") return String(value);
+  return `${value}%`;
+}
+
+function formatDiff(metricName: string, contractor: number, peer: number): { diff: string; above: boolean } {
+  const d = contractor - peer;
+  if (metricName === "Avg Sale") {
+    return { diff: `${d >= 0 ? "+" : ""}$${(d / 1000).toFixed(1)}K`, above: d > 0 };
+  }
+  if (metricName === "Avg Sales Cycle") {
+    return { diff: `${d} days`, above: d < 0 }; // lower is better
+  }
+  if (metricName === "NPS Score") {
+    return { diff: `${d >= 0 ? "+" : ""}${d}`, above: d > 0 };
+  }
+  return { diff: `${d >= 0 ? "+" : ""}${d.toFixed(1)}pp`, above: d > 0 };
+}
+
 export default function BenchmarksPage() {
+  const { benchmarks } = useBenchmarkData();
+
+  const benchmarkRows = benchmarks.length > 0
+    ? benchmarks.map((b) => {
+        const { diff, above } = formatDiff(b.metric_name, b.contractor_value, b.peer_value);
+        return {
+          metric: b.metric_name,
+          contractor: formatBenchmarkValue(b.metric_name, b.contractor_value),
+          peer: formatBenchmarkValue(b.metric_name, b.peer_value),
+          diff,
+          above,
+        };
+      })
+    : defaultComparison;
+
+  const metricsAbove = benchmarkRows.filter((r) => r.above).length;
+  const totalMetrics = benchmarkRows.length;
+
+  const summaryMetrics = [
+    {
+      label: "Overall Score",
+      value: "112%",
+      subtitle: "of Peer Average",
+      icon: Award,
+    },
+    {
+      label: "Metrics Above Peer",
+      value: `${metricsAbove}/${totalMetrics}`,
+      subtitle: "metrics leading",
+      icon: BarChart3,
+    },
+    {
+      label: "Top Strength",
+      value: "Referral Conv.",
+      subtitle: "+13.9pp vs peer",
+      icon: Zap,
+    },
+    {
+      label: "Biggest Gap",
+      value: "Sales Cycle",
+      subtitle: "34 vs 42 days (better)",
+      icon: ShieldCheck,
+    },
+  ];
   return (
     <PageTransition>
       <div className="space-y-8">
@@ -160,7 +199,7 @@ export default function BenchmarksPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {detailedComparison.map((row) => (
+                    {benchmarkRows.map((row) => (
                       <tr key={row.metric} className="border-b border-gray-50 last:border-0">
                         <td className="py-3 font-medium">{row.metric}</td>
                         <td className="py-3 text-right font-semibold">{row.contractor}</td>
