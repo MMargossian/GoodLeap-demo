@@ -207,7 +207,7 @@ export async function POST(request: NextRequest) {
     const prompt = buildPrompt(section, metrics || {});
 
     const response = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-4-5-20250929",
       max_tokens: 1024,
       temperature: 0.3,
       system: SYSTEM_PROMPT,
