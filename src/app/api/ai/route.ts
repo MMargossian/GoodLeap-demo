@@ -241,6 +241,7 @@ export async function POST(request: NextRequest) {
       insights: getFallbackInsights(section),
       source: "fallback",
       message: "AI generation failed. Showing default insights.",
+      error_detail: error instanceof Error ? error.message : String(error),
     });
   }
 }
