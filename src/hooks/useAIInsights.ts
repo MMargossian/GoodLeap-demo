@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 
 export interface AIInsight {
   insight_type: string;
@@ -105,82 +105,14 @@ const defaultInsights: Record<string, AIInsight[]> = {
   ],
 };
 
-const sectionMetrics: Record<string, Record<string, unknown>> = {
-  sales: {
-    totalRevenue: "$2,475,700",
-    projects: 140,
-    avgSale: "$17,683",
-    revenueTrend: "+3.9%",
-    avgMonthly: "$206,308",
-    peakMonth: "October ($245,000)",
-    conversionRate: "22%",
-    pullThrough: "40.2%",
-    referralConversion: "38.9%",
-    repeatCustomers: "42%",
-    upsellRate: "28%",
-    avgSalesCycle: "34 days",
-    cancellations: 12,
-    targetAttainment: "95.2%",
-  },
-  funding: {
-    approvalRate: "59.5%",
-    pullThrough: "40.2%",
-    delinquencyRate: "3.2%",
-    avgLoanAmount: "$17,683",
-    totalFunded: "$2,475,700",
-    ficoDistribution: {
-      "760+": "28%",
-      "700-759": "35%",
-      "660-699": "22%",
-      "580-659": "15%",
-    },
-  },
-  benchmarks: {
-    conversionRate: { contractor: "22%", peers: "18%" },
-    salesCycle: { contractor: "34 days", peers: "42 days" },
-    repeatCustomerRate: { contractor: "42%", peers: "35%" },
-    referralRate: { contractor: "38.9%", peers: "25%" },
-    upsellRate: { contractor: "28%", peers: "20%" },
-    avgTicketSize: { contractor: "$17,683", peers: "$15,200" },
-  },
-  projects: {
-    pipelineStages: {
-      submitted: 45,
-      approved: 31,
-      contractSigned: 28,
-      installScheduled: 22,
-      installComplete: 18,
-      funded: 14,
-    },
-    avgDaysPerStage: {
-      submissionToApproval: 2.1,
-      approvalToContract: 4.5,
-      contractToInstall: 12.3,
-      installToComplete: 18.5,
-      completeToFunded: 5.2,
-    },
-    submissionToApprovalRate: "68.8%",
-  },
-  satisfaction: {
-    overallNPS: 58,
-    recommendRate: "58%",
-    detractorRate: "11%",
-    neutralRate: "31%",
-    touchpoints: {
-      salesExperience: { recommend: "62%", neutral: "28%", negative: "10%" },
-      installation: { recommend: "48%", neutral: "35%", negative: "17%" },
-      postFunding: { recommend: "55%", neutral: "38%", negative: "7%" },
-      communication: { recommend: "60%", neutral: "30%", negative: "10%" },
-    },
-  },
-};
-
-export function useAIInsights(section: string) {
+export function useAIInsights(section: string, metrics?: Record<string, unknown>) {
   const [insights, setInsights] = useState<AIInsight[]>(
     defaultInsights[section] || defaultInsights.sales
   );
   const [isLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const metricsRef = useRef(metrics);
+  metricsRef.current = metrics;
 
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -190,7 +122,7 @@ export function useAIInsights(section: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           section,
-          metrics: sectionMetrics[section] || sectionMetrics.sales,
+          metrics: metricsRef.current || {},
         }),
       });
 

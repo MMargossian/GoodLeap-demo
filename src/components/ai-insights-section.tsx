@@ -9,10 +9,11 @@ import { useToast } from "@/components/ui/toast";
 
 interface AIInsightsSectionProps {
   section: string;
+  metrics?: Record<string, unknown>;
 }
 
-export function AIInsightsSection({ section }: AIInsightsSectionProps) {
-  const { insights, isRefreshing, refresh } = useAIInsights(section);
+export function AIInsightsSection({ section, metrics }: AIInsightsSectionProps) {
+  const { insights, isRefreshing, refresh } = useAIInsights(section, metrics);
   const { toast } = useToast();
 
   const handleRefresh = async () => {

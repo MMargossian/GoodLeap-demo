@@ -25,6 +25,7 @@ import {
   ArrowUpRight,
 } from "lucide-react";
 import { useProjectHealthData } from "@/hooks/useConvexData";
+import { AIInsightsSection } from "@/components/ai-insights-section";
 
 const defaultActions = [
   { stage: "Docs Sent", action_text: "Follow up on Signature", project_count: 12, risk_level: "medium" },
@@ -301,6 +302,18 @@ export default function ProjectHealthPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI-Powered Insights */}
+      <AIInsightsSection section="projects" metrics={{
+        avgDaysToSign,
+        avgDaysSignToFund,
+        expiringPct: `${expiringPct}%`,
+        expiredValue: `$${expiredValue.toLocaleString()}`,
+        totalActionItems: totalActionCount,
+        pipelineStages: pipelineStages.length > 0
+          ? Object.fromEntries(pipelineStages.map((s) => [s.stage, { count: s.count, avgDays: s.avg_days, peerAvgDays: s.similar_contractor_avg_days }]))
+          : undefined,
+      }} />
     </div>
   );
 }

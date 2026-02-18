@@ -272,7 +272,18 @@ export default function SalesPerformancePage() {
 
         {/* Section 6: AI-Powered Insights */}
         <FadeIn delay={0.15}>
-          <AIInsightsSection section="sales" />
+          <AIInsightsSection section="sales" metrics={{
+            totalRevenue: `$${revenue.toLocaleString()}`,
+            projects,
+            avgSale: `$${avgSale.toLocaleString()}`,
+            conversionRate: `${conversionRate}%`,
+            referralConversion: `${referralConversion}%`,
+            repeatCustomerRate: `${repeatRate}%`,
+            upsellRate: `${upsellRate}%`,
+            avgSalesCycle: `${avgSalesCycle} days`,
+            cancellations,
+            targetAttainment: `${targetAttainment}%`,
+          }} />
         </FadeIn>
 
         {/* Section 7: Recommendations */}

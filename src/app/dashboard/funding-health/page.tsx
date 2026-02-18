@@ -26,6 +26,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { useFundingData } from "@/hooks/useConvexData";
+import { AIInsightsSection } from "@/components/ai-insights-section";
 
 const MONTHS = [
   "January",
@@ -250,6 +251,16 @@ export default function FundingHealthPage() {
           </Card>
         </div>
       </div>
+
+      {/* AI-Powered Insights */}
+      <AIInsightsSection section="funding" metrics={{
+        approvalRate: `${approvalRate}%`,
+        pullThrough: `${pullThrough}%`,
+        delinquencyRate: `${delinquencyRate}%`,
+        paymentStatus,
+        avgLoan: `$${avgLoan.toLocaleString()}`,
+        utilizationRate: `${utilizationRate}%`,
+      }} />
     </div>
   );
 }

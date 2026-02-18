@@ -21,6 +21,7 @@ import {
   PageTransition,
 } from "@/components/ui/animated";
 import { useCustomerSatisfactionData } from "@/hooks/useConvexData";
+import { AIInsightsSection } from "@/components/ai-insights-section";
 
 const defaultInsights = [
   { category: "Site Cleanup", description: "Multiple reports of debris left after installation. Implement mandatory cleanup checklist." },
@@ -207,6 +208,17 @@ export default function CustomerSatisfactionPage() {
             })}
           </StaggerContainer>
         </div>
+
+        {/* AI-Powered Insights */}
+        <AIInsightsSection section="satisfaction" metrics={{
+          wouldRecommend: `${wouldRecommend}%`,
+          neutral: `${neutral}%`,
+          wouldNotRecommend: `${wouldNotRecommend}%`,
+          openIssues,
+          defectiveProjects,
+          defectiveRate: `${defectiveRate}%`,
+          escalations,
+        }} />
       </div>
     </PageTransition>
   );

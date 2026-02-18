@@ -22,6 +22,7 @@ import {
   PageTransition,
 } from "@/components/ui/animated";
 import { useBenchmarkData } from "@/hooks/useConvexData";
+import { AIInsightsSection } from "@/components/ai-insights-section";
 
 const defaultComparison = [
   { metric: "Conversion Rate", contractor: "22%", peer: "18%", diff: "+4pp", above: true },
@@ -231,6 +232,11 @@ export default function BenchmarksPage() {
             </CardContent>
           </Card>
         </FadeIn>
+
+        {/* AI-Powered Insights */}
+        <AIInsightsSection section="benchmarks" metrics={
+          Object.fromEntries(benchmarkRows.map((r) => [r.metric, { you: r.contractor, peer: r.peer, diff: r.diff }]))
+        } />
       </div>
     </PageTransition>
   );
