@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InsightCard } from "@/components/cards/insight-card";
 import { RecommendationBreakdown } from "@/components/charts/recommendation-breakdown";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ThumbsUp,
   Minus,
@@ -22,12 +23,7 @@ import {
 } from "@/components/ui/animated";
 import { useCustomerSatisfactionData } from "@/hooks/useConvexData";
 import { AIInsightsSection } from "@/components/ai-insights-section";
-
-const defaultInsights = [
-  { category: "Site Cleanup", description: "Multiple reports of debris left after installation. Implement mandatory cleanup checklist." },
-  { category: "Install Quality", description: "Panel alignment issues reported in 12% of installations. Schedule additional QC inspections." },
-  { category: "Follow-ups", description: "Post-installation follow-up calls delayed by average 5 days. Automate scheduling within 48 hours." },
-];
+import { useAIInsights } from "@/hooks/useAIInsights";
 
 export default function CustomerSatisfactionPage() {
   const { feedback, touchpoints, insights } = useCustomerSatisfactionData();
@@ -39,6 +35,32 @@ export default function CustomerSatisfactionPage() {
   const defectiveProjects = feedback?.defective_projects ?? 8;
   const defectiveRate = feedback?.defective_rate ?? 5.7;
   const escalations = feedback?.escalations ?? 4;
+
+  const satisfactionMetrics = {
+    wouldRecommend: `${wouldRecommend}%`,
+    neutral: `${neutral}%`,
+    wouldNotRecommend: `${wouldNotRecommend}%`,
+    openIssues,
+    defectiveProjects,
+    defectiveRate: `${defectiveRate}%`,
+    escalations,
+  };
+
+  const { insights: aiInsights, getInsightByType, isLoading, isRefreshing, refresh } = useAIInsights("satisfaction", satisfactionMetrics);
+
+  const installationCard = getInsightByType("installation_card");
+  const postFundingCard = getInsightByType("post_funding_card");
+  const sentimentCard = getInsightByType("sentiment_card");
+  const cleanupInsight = getInsightByType("cleanup_insight");
+  const qualityInsight = getInsightByType("quality_insight");
+  const followupInsight = getInsightByType("followup_insight");
+
+  const customerInsightItems = [
+    { insight: cleanupInsight, fallbackCategory: "Site Cleanup", fallbackDescription: "Multiple reports of debris left after installation. Implement mandatory cleanup checklist.", icon: Wrench },
+    { insight: qualityInsight, fallbackCategory: "Install Quality", fallbackDescription: "Panel alignment issues reported in 12% of installations. Schedule additional QC inspections.", icon: Layers },
+    { insight: followupInsight, fallbackCategory: "Follow-ups", fallbackDescription: "Post-installation follow-up calls delayed by average 5 days. Automate scheduling within 48 hours.", icon: Phone },
+  ];
+
   return (
     <PageTransition>
       <div className="space-y-8">
@@ -145,7 +167,7 @@ export default function CustomerSatisfactionPage() {
           </AnimatedCard>
         </FadeIn>
 
-        {/* Section 3: Key Takeaways */}
+        {/* Section 3: Key Takeaways - AI Powered */}
         <div>
           <FadeIn delay={0.05}>
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
@@ -154,30 +176,60 @@ export default function CustomerSatisfactionPage() {
           </FadeIn>
           <StaggerContainer staggerDelay={0.12} className="grid gap-4 md:grid-cols-3">
             <StaggerItem>
-              <InsightCard
-                type="warning"
-                title="Installation Improvement Needed"
-                content="Installation touchpoint has lowest recommendation rate (48%). Focus on cleanup procedures and panel alignment quality to boost satisfaction."
-              />
+              {isLoading ? (
+                <Skeleton className="h-32 w-full rounded-xl" />
+              ) : installationCard ? (
+                <InsightCard
+                  type="warning"
+                  title={installationCard.title}
+                  content={installationCard.content}
+                />
+              ) : (
+                <InsightCard
+                  type="warning"
+                  title="Installation Improvement Needed"
+                  content="Installation touchpoint has lowest recommendation rate (48%). Focus on cleanup procedures and panel alignment quality to boost satisfaction."
+                />
+              )}
             </StaggerItem>
             <StaggerItem>
-              <InsightCard
-                type="success"
-                title="Positive Post-Funding Experience"
-                content="55% recommendation in post-funding with only 7% negative shows strong ongoing customer relationships after project completion."
-              />
+              {isLoading ? (
+                <Skeleton className="h-32 w-full rounded-xl" />
+              ) : postFundingCard ? (
+                <InsightCard
+                  type="success"
+                  title={postFundingCard.title}
+                  content={postFundingCard.content}
+                />
+              ) : (
+                <InsightCard
+                  type="success"
+                  title="Positive Post-Funding Experience"
+                  content="55% recommendation in post-funding with only 7% negative shows strong ongoing customer relationships after project completion."
+                />
+              )}
             </StaggerItem>
             <StaggerItem>
-              <InsightCard
-                type="info"
-                title="Above Average Sentiment"
-                content="58% recommendation rate with only 11% detractors puts you in a solid position. Target the 31% neutral segment with proactive outreach to convert them to promoters."
-              />
+              {isLoading ? (
+                <Skeleton className="h-32 w-full rounded-xl" />
+              ) : sentimentCard ? (
+                <InsightCard
+                  type="info"
+                  title={sentimentCard.title}
+                  content={sentimentCard.content}
+                />
+              ) : (
+                <InsightCard
+                  type="info"
+                  title="Above Average Sentiment"
+                  content="58% recommendation rate with only 11% detractors puts you in a solid position. Target the 31% neutral segment with proactive outreach to convert them to promoters."
+                />
+              )}
             </StaggerItem>
           </StaggerContainer>
         </div>
 
-        {/* Section 4: Customer Insights */}
+        {/* Section 4: Customer Insights - AI Powered */}
         <div>
           <FadeIn delay={0.05}>
             <h2 className="mb-4 text-lg font-semibold text-gray-900">
@@ -185,24 +237,27 @@ export default function CustomerSatisfactionPage() {
             </h2>
           </FadeIn>
           <StaggerContainer staggerDelay={0.1} className="grid gap-4 md:grid-cols-3">
-            {(insights.length > 0 ? insights : defaultInsights).map((item, i) => {
-              const icons = [Wrench, Layers, Phone];
-              const Icon = icons[i % icons.length];
+            {customerInsightItems.map((item) => {
+              const Icon = item.icon;
               return (
-                <StaggerItem key={item.category}>
-                  <AnimatedCard className="h-full">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm">
-                        <Icon className="h-4 w-4 text-primary" />
-                        {item.category}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        {item.description}
-                      </p>
-                    </CardContent>
-                  </AnimatedCard>
+                <StaggerItem key={item.fallbackCategory}>
+                  {isLoading ? (
+                    <Skeleton className="h-32 w-full rounded-xl" />
+                  ) : (
+                    <AnimatedCard className="h-full">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-sm">
+                          <Icon className="h-4 w-4 text-primary" />
+                          {item.insight ? item.insight.title : item.fallbackCategory}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          {item.insight ? item.insight.content : item.fallbackDescription}
+                        </p>
+                      </CardContent>
+                    </AnimatedCard>
+                  )}
                 </StaggerItem>
               );
             })}
@@ -210,15 +265,12 @@ export default function CustomerSatisfactionPage() {
         </div>
 
         {/* AI-Powered Insights */}
-        <AIInsightsSection section="satisfaction" metrics={{
-          wouldRecommend: `${wouldRecommend}%`,
-          neutral: `${neutral}%`,
-          wouldNotRecommend: `${wouldNotRecommend}%`,
-          openIssues,
-          defectiveProjects,
-          defectiveRate: `${defectiveRate}%`,
-          escalations,
-        }} />
+        <AIInsightsSection
+          insights={aiInsights}
+          isRefreshing={isRefreshing}
+          refresh={refresh}
+          insightTypes={["installation", "trend", "post-funding"]}
+        />
       </div>
     </PageTransition>
   );

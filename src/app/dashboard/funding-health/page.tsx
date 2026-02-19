@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FicoChart } from "@/components/charts/fico-chart";
 import {
   AlertTriangle,
@@ -27,6 +28,7 @@ import {
 } from "lucide-react";
 import { useFundingData } from "@/hooks/useConvexData";
 import { AIInsightsSection } from "@/components/ai-insights-section";
+import { useAIInsights } from "@/hooks/useAIInsights";
 
 const MONTHS = [
   "January",
@@ -53,6 +55,20 @@ export default function FundingHealthPage() {
   const paymentStatus = fundingHealth?.payment_status ?? "On Track";
   const avgLoan = loanAmounts?.avg_loan ?? 10812;
   const utilizationRate = loanAmounts?.utilization_rate ?? 35.8;
+
+  const fundingMetrics = {
+    approvalRate: `${approvalRate}%`,
+    pullThrough: `${pullThrough}%`,
+    delinquencyRate: `${delinquencyRate}%`,
+    paymentStatus,
+    avgLoan: `$${avgLoan.toLocaleString()}`,
+    utilizationRate: `${utilizationRate}%`,
+  };
+
+  const { insights, getInsightByType, isLoading, isRefreshing, refresh } = useAIInsights("funding", fundingMetrics);
+
+  const ficoTakeaway = getInsightByType("fico_takeaway");
+  const loanInsight = getInsightByType("loan_insight");
 
   return (
     <div className="space-y-8">
@@ -135,18 +151,24 @@ export default function FundingHealthPage() {
               </p>
             </div>
 
-            {/* Key Takeaway */}
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <Lightbulb className="h-4 w-4 text-amber-500" />
-                <p className="text-xs font-semibold tracking-wider text-gray-700 uppercase">
-                  Key Takeaway
+            {/* Key Takeaway - AI Powered */}
+            {isLoading ? (
+              <Skeleton className="h-24 w-full rounded-lg" />
+            ) : (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Lightbulb className="h-4 w-4 text-amber-500" />
+                  <p className="text-xs font-semibold tracking-wider text-gray-700 uppercase">
+                    Key Takeaway
+                  </p>
+                </div>
+                <p className="text-sm text-gray-600">
+                  {ficoTakeaway
+                    ? ficoTakeaway.content
+                    : "Applications with FICO >700 have 85% approval vs. 45% below 700. Focusing on high-credit borrowers drastically improves pull-through."}
                 </p>
               </div>
-              <p className="text-sm text-gray-600">
-                Applications with FICO &gt;700 have 85% approval vs. 45% below 700. Focusing on high-credit borrowers drastically improves pull-through.
-              </p>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -235,32 +257,36 @@ export default function FundingHealthPage() {
                 </div>
               </div>
 
-              {/* Key Insight */}
-              <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Lightbulb className="h-4 w-4 text-amber-500" />
-                  <p className="text-xs font-semibold tracking-wider text-gray-700 uppercase">
-                    Key Insight
+              {/* Key Insight - AI Powered */}
+              {isLoading ? (
+                <Skeleton className="h-24 w-full rounded-lg" />
+              ) : (
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Lightbulb className="h-4 w-4 text-amber-500" />
+                    <p className="text-xs font-semibold tracking-wider text-gray-700 uppercase">
+                      Key Insight
+                    </p>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {loanInsight
+                      ? loanInsight.content
+                      : <>Customers are using only <span className="font-semibold">36% of approved loan capacity</span>. Average customer could borrow $400K but take $10,812, presenting a significant opportunity to <span className="font-semibold">upsell project add-ons</span>.</>}
                   </p>
                 </div>
-                <p className="text-sm text-gray-600">
-                  Customers are using only <span className="font-semibold">36% of approved loan capacity</span>. Average customer could borrow $400K but take $10,812, presenting a significant opportunity to <span className="font-semibold">upsell project add-ons</span>.
-                </p>
-              </div>
+              )}
             </CardContent>
           </Card>
         </div>
       </div>
 
       {/* AI-Powered Insights */}
-      <AIInsightsSection section="funding" metrics={{
-        approvalRate: `${approvalRate}%`,
-        pullThrough: `${pullThrough}%`,
-        delinquencyRate: `${delinquencyRate}%`,
-        paymentStatus,
-        avgLoan: `$${avgLoan.toLocaleString()}`,
-        utilizationRate: `${utilizationRate}%`,
-      }} />
+      <AIInsightsSection
+        insights={insights}
+        isRefreshing={isRefreshing}
+        refresh={refresh}
+        insightTypes={["warning", "success"]}
+      />
     </div>
   );
 }

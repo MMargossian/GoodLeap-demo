@@ -16,6 +16,7 @@ import { RevenueTrendsChart } from "@/components/charts/revenue-trends-chart";
 import { RevenueForecastChart } from "@/components/charts/revenue-forecast-chart";
 import { DepartmentBarChart } from "@/components/charts/department-bar-chart";
 import { ProductMixChart } from "@/components/charts/product-mix-chart";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   DollarSign,
   TrendingUp,
@@ -32,6 +33,7 @@ import {
   PageTransition,
 } from "@/components/ui/animated";
 import { useSalesData } from "@/hooks/useConvexData";
+import { useAIInsights } from "@/hooks/useAIInsights";
 
 function StatColumn({
   title,
@@ -75,6 +77,25 @@ export default function SalesPerformancePage() {
   const avgInstallLength = salesData?.avg_install_length ?? 4.2;
   const avgMonthly = Math.round(revenue / 12);
   const targetAttainment = salesData ? ((revenue / salesData.target) * 100).toFixed(1) : "95.2";
+
+  const salesMetrics = {
+    totalRevenue: `$${revenue.toLocaleString()}`,
+    projects,
+    avgSale: `$${avgSale.toLocaleString()}`,
+    conversionRate: `${conversionRate}%`,
+    referralConversion: `${referralConversion}%`,
+    repeatCustomerRate: `${repeatRate}%`,
+    upsellRate: `${upsellRate}%`,
+    avgSalesCycle: `${avgSalesCycle} days`,
+    cancellations,
+    targetAttainment: `${targetAttainment}%`,
+  };
+
+  const { insights, getInsightByType, isLoading, isRefreshing, refresh } = useAIInsights("sales", salesMetrics);
+
+  const salesInsight = getInsightByType("sales_insight");
+  const topRec = getInsightByType("top_recommendation");
+  const marketOpp = getInsightByType("market_opportunity");
 
   const kpiItems = [
     { label: "Projects", value: String(projects) },
@@ -237,11 +258,21 @@ export default function SalesPerformancePage() {
 
         {/* Section 4: Sales Performance Insight */}
         <FadeIn delay={0.2}>
-          <InsightCard
-            type="info"
-            title="Strong Growth Trajectory"
-            content="Your 3.9% revenue growth and $206K monthly average demonstrate consistent market penetration. Focus on maintaining the Q4 momentum by targeting the home improvement segment which shows highest conversion rates."
-          />
+          {isLoading ? (
+            <Skeleton className="h-24 w-full rounded-xl" />
+          ) : salesInsight ? (
+            <InsightCard
+              type="info"
+              title={salesInsight.title}
+              content={salesInsight.content}
+            />
+          ) : (
+            <InsightCard
+              type="info"
+              title="Strong Growth Trajectory"
+              content="Your 3.9% revenue growth and $206K monthly average demonstrate consistent market penetration. Focus on maintaining the Q4 momentum by targeting the home improvement segment which shows highest conversion rates."
+            />
+          )}
         </FadeIn>
 
         {/* Section 5: Department & Product Mix */}
@@ -272,37 +303,53 @@ export default function SalesPerformancePage() {
 
         {/* Section 6: AI-Powered Insights */}
         <FadeIn delay={0.15}>
-          <AIInsightsSection section="sales" metrics={{
-            totalRevenue: `$${revenue.toLocaleString()}`,
-            projects,
-            avgSale: `$${avgSale.toLocaleString()}`,
-            conversionRate: `${conversionRate}%`,
-            referralConversion: `${referralConversion}%`,
-            repeatCustomerRate: `${repeatRate}%`,
-            upsellRate: `${upsellRate}%`,
-            avgSalesCycle: `${avgSalesCycle} days`,
-            cancellations,
-            targetAttainment: `${targetAttainment}%`,
-          }} />
+          <AIInsightsSection
+            insights={insights}
+            isRefreshing={isRefreshing}
+            refresh={refresh}
+            insightTypes={["performance", "recommendation", "opportunity"]}
+          />
         </FadeIn>
 
         {/* Section 7: Recommendations */}
         <StaggerContainer staggerDelay={0.15} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <StaggerItem>
-            <RecommendationCard
-              variant="recommendation"
-              title="Top Recommendation"
-              heading="Expand Referral Program"
-              content="With 38.9% referral conversion—well above the 25% industry average—invest in formalizing your referral incentive program to drive even more high-quality leads."
-            />
+            {isLoading ? (
+              <Skeleton className="h-48 w-full rounded-xl" />
+            ) : topRec ? (
+              <RecommendationCard
+                variant="recommendation"
+                title="Top Recommendation"
+                heading={topRec.title}
+                content={topRec.content}
+              />
+            ) : (
+              <RecommendationCard
+                variant="recommendation"
+                title="Top Recommendation"
+                heading="Expand Referral Program"
+                content="With 38.9% referral conversion—well above the 25% industry average—invest in formalizing your referral incentive program to drive even more high-quality leads."
+              />
+            )}
           </StaggerItem>
           <StaggerItem>
-            <RecommendationCard
-              variant="opportunity"
-              title="Market Opportunity"
-              heading="Home Remodel Expansion"
-              content="Home remodel projects show the highest average ticket size. Consider targeted marketing campaigns to grow this segment from 37 to 50+ projects next quarter."
-            />
+            {isLoading ? (
+              <Skeleton className="h-48 w-full rounded-xl" />
+            ) : marketOpp ? (
+              <RecommendationCard
+                variant="opportunity"
+                title="Market Opportunity"
+                heading={marketOpp.title}
+                content={marketOpp.content}
+              />
+            ) : (
+              <RecommendationCard
+                variant="opportunity"
+                title="Market Opportunity"
+                heading="Home Remodel Expansion"
+                content="Home remodel projects show the highest average ticket size. Consider targeted marketing campaigns to grow this segment from 37 to 50+ projects next quarter."
+              />
+            )}
           </StaggerItem>
         </StaggerContainer>
       </div>

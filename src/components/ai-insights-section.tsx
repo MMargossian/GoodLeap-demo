@@ -1,6 +1,6 @@
 "use client";
 
-import { useAIInsights } from "@/hooks/useAIInsights";
+import { AIInsight } from "@/hooks/useAIInsights";
 import { AIInsightCard } from "@/components/cards/ai-insight-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,12 +8,13 @@ import { Sparkles, RefreshCw, Loader2 } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 
 interface AIInsightsSectionProps {
-  section: string;
-  metrics?: Record<string, unknown>;
+  insights: AIInsight[];
+  isRefreshing: boolean;
+  refresh: () => Promise<{ source: string; message: string | undefined } | undefined>;
+  insightTypes?: string[];
 }
 
-export function AIInsightsSection({ section, metrics }: AIInsightsSectionProps) {
-  const { insights, isRefreshing, refresh } = useAIInsights(section, metrics);
+export function AIInsightsSection({ insights, isRefreshing, refresh, insightTypes }: AIInsightsSectionProps) {
   const { toast } = useToast();
 
   const handleRefresh = async () => {
@@ -25,6 +26,10 @@ export function AIInsightsSection({ section, metrics }: AIInsightsSectionProps) 
       toast("Insights refreshed with AI", 3000);
     }
   };
+
+  const filteredInsights = insightTypes
+    ? insights.filter((i) => insightTypes.includes(i.insight_type))
+    : insights;
 
   return (
     <div className="space-y-4">
@@ -56,7 +61,7 @@ export function AIInsightsSection({ section, metrics }: AIInsightsSectionProps) 
       {/* Insights Grid */}
       {isRefreshing ? (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          {Array.from({ length: insights.length || 3 }).map((_, i) => (
+          {Array.from({ length: filteredInsights.length || 3 }).map((_, i) => (
             <div key={i} className="space-y-3 rounded-xl border p-5">
               <div className="flex items-center gap-2">
                 <Skeleton className="h-4 w-4 rounded-full" />
@@ -71,12 +76,12 @@ export function AIInsightsSection({ section, metrics }: AIInsightsSectionProps) 
       ) : (
         <div
           className={`grid grid-cols-1 gap-4 ${
-            insights.length === 2
+            filteredInsights.length === 2
               ? "lg:grid-cols-2"
               : "lg:grid-cols-3"
           }`}
         >
-          {insights.map((insight, index) => (
+          {filteredInsights.map((insight, index) => (
             <AIInsightCard
               key={`${insight.insight_type}-${index}`}
               insightType={insight.insight_type}

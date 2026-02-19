@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { InsightCard } from "@/components/cards/insight-card";
 import { BenchmarkComparisonChart } from "@/components/charts/benchmark-comparison-chart";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp,
   Users,
@@ -23,6 +24,7 @@ import {
 } from "@/components/ui/animated";
 import { useBenchmarkData } from "@/hooks/useConvexData";
 import { AIInsightsSection } from "@/components/ai-insights-section";
+import { useAIInsights } from "@/hooks/useAIInsights";
 
 const defaultComparison = [
   { metric: "Conversion Rate", contractor: "22%", peer: "18%", diff: "+4pp", above: true },
@@ -73,6 +75,16 @@ export default function BenchmarksPage() {
 
   const metricsAbove = benchmarkRows.filter((r) => r.above).length;
   const totalMetrics = benchmarkRows.length;
+
+  const benchmarkMetrics = Object.fromEntries(
+    benchmarkRows.map((r) => [r.metric, { you: r.contractor, peer: r.peer, diff: r.diff }])
+  );
+
+  const { insights, getInsightByType, isLoading, isRefreshing, refresh } = useAIInsights("benchmarks", benchmarkMetrics);
+
+  const salesExcellence = getInsightByType("sales_excellence_card");
+  const customerLoyalty = getInsightByType("customer_loyalty_card");
+  const growthPotential = getInsightByType("growth_potential_card");
 
   const summaryMetrics = [
     {
@@ -155,28 +167,61 @@ export default function BenchmarksPage() {
               <h2 className="text-lg font-semibold">Performance Insights</h2>
             </StaggerItem>
             <StaggerItem>
-              <InsightCard
-                type="success"
-                icon={TrendingUp}
-                title="Sales Excellence"
-                content="Your conversion rate of 22% exceeds the peer average of 18%. Your shorter sales cycle (34 vs 42 days) gives you a competitive edge in closing deals faster."
-              />
+              {isLoading ? (
+                <Skeleton className="h-32 w-full rounded-xl" />
+              ) : salesExcellence ? (
+                <InsightCard
+                  type="success"
+                  icon={TrendingUp}
+                  title={salesExcellence.title}
+                  content={salesExcellence.content}
+                />
+              ) : (
+                <InsightCard
+                  type="success"
+                  icon={TrendingUp}
+                  title="Sales Excellence"
+                  content="Your conversion rate of 22% exceeds the peer average of 18%. Your shorter sales cycle (34 vs 42 days) gives you a competitive edge in closing deals faster."
+                />
+              )}
             </StaggerItem>
             <StaggerItem>
-              <InsightCard
-                type="info"
-                icon={Users}
-                title="Customer Loyalty"
-                content="42% repeat customer rate (vs 35% peers) and 38.9% referral rate show strong customer relationships. This organic growth engine reduces your customer acquisition costs."
-              />
+              {isLoading ? (
+                <Skeleton className="h-32 w-full rounded-xl" />
+              ) : customerLoyalty ? (
+                <InsightCard
+                  type="info"
+                  icon={Users}
+                  title={customerLoyalty.title}
+                  content={customerLoyalty.content}
+                />
+              ) : (
+                <InsightCard
+                  type="info"
+                  icon={Users}
+                  title="Customer Loyalty"
+                  content="42% repeat customer rate (vs 35% peers) and 38.9% referral rate show strong customer relationships. This organic growth engine reduces your customer acquisition costs."
+                />
+              )}
             </StaggerItem>
             <StaggerItem>
-              <InsightCard
-                type="warning"
-                icon={Target}
-                title="Growth Potential"
-                content="28% upsell rate significantly exceeds the 20% peer average. Train the full sales team on the upsell strategies your top performers use."
-              />
+              {isLoading ? (
+                <Skeleton className="h-32 w-full rounded-xl" />
+              ) : growthPotential ? (
+                <InsightCard
+                  type="warning"
+                  icon={Target}
+                  title={growthPotential.title}
+                  content={growthPotential.content}
+                />
+              ) : (
+                <InsightCard
+                  type="warning"
+                  icon={Target}
+                  title="Growth Potential"
+                  content="28% upsell rate significantly exceeds the 20% peer average. Train the full sales team on the upsell strategies your top performers use."
+                />
+              )}
             </StaggerItem>
           </StaggerContainer>
         </div>
@@ -234,9 +279,12 @@ export default function BenchmarksPage() {
         </FadeIn>
 
         {/* AI-Powered Insights */}
-        <AIInsightsSection section="benchmarks" metrics={
-          Object.fromEntries(benchmarkRows.map((r) => [r.metric, { you: r.contractor, peer: r.peer, diff: r.diff }]))
-        } />
+        <AIInsightsSection
+          insights={insights}
+          isRefreshing={isRefreshing}
+          refresh={refresh}
+          insightTypes={["excellence", "loyalty", "growth"]}
+        />
       </div>
     </PageTransition>
   );
