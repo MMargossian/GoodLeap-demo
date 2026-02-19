@@ -37,6 +37,7 @@ export default defineSchema({
     month: v.number(),
     actual_revenue: v.number(),
     forecast_revenue: v.optional(v.number()),
+    department: v.optional(v.string()),
   }).index("by_contractor", ["contractor_id"]),
 
   department_perf: defineTable({
@@ -59,6 +60,7 @@ export default defineSchema({
     category: v.string(),
     count: v.number(),
     period: v.string(),
+    department: v.optional(v.string()),
   }).index("by_contractor", ["contractor_id"]),
 
   funding_health: defineTable({

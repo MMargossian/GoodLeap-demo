@@ -40,8 +40,8 @@ export const seed = internalMutation({
       avg_install_length: 4.2,
     });
 
-    // 4. Monthly revenue
-    const monthlyData = [
+    // 4. Monthly revenue (granular per-department)
+    const monthlyTotals = [
       { month: 1, actual_revenue: 165000 },
       { month: 2, actual_revenue: 178000 },
       { month: 3, actual_revenue: 195000 },
@@ -55,14 +55,25 @@ export const seed = internalMutation({
       { month: 11, actual_revenue: 230000, forecast_revenue: 235000 },
       { month: 12, actual_revenue: 156700, forecast_revenue: 220000 },
     ];
-    for (const m of monthlyData) {
-      await ctx.db.insert("revenue_monthly", {
-        contractor_id: contractorId,
-        year: 2024,
-        month: m.month,
-        actual_revenue: m.actual_revenue,
-        forecast_revenue: m.forecast_revenue,
-      });
+    const deptRevenueShares: Record<string, number> = {
+      "West Coast": 0.246,
+      "Northeast": 0.199,
+      "Southeast": 0.180,
+      "Midwest": 0.147,
+      "Southwest": 0.135,
+      "Pacific NW": 0.092,
+    };
+    for (const m of monthlyTotals) {
+      for (const [dept, share] of Object.entries(deptRevenueShares)) {
+        await ctx.db.insert("revenue_monthly", {
+          contractor_id: contractorId,
+          year: 2024,
+          month: m.month,
+          actual_revenue: Math.round(m.actual_revenue * share),
+          forecast_revenue: m.forecast_revenue ? Math.round(m.forecast_revenue * share) : undefined,
+          department: dept,
+        });
+      }
     }
 
     // 5. Department performance
@@ -108,19 +119,25 @@ export const seed = internalMutation({
       });
     }
 
-    // 7. Product mix
-    const products = [
-      { category: "Home Improvement", count: 55 },
-      { category: "Roofing", count: 48 },
-      { category: "Home Remodel", count: 37 },
+    // 7. Product mix (granular per-department)
+    const productMixByDept = [
+      { department: "West Coast", categories: [{ category: "Home Improvement", count: 14 }, { category: "Roofing", count: 10 }, { category: "Home Remodel", count: 9 }, { category: "Solar Panel", count: 8 }, { category: "HVAC", count: 5 }] },
+      { department: "Northeast", categories: [{ category: "Home Improvement", count: 12 }, { category: "Roofing", count: 11 }, { category: "Home Remodel", count: 8 }, { category: "Solar Panel", count: 5 }, { category: "HVAC", count: 4 }] },
+      { department: "Southeast", categories: [{ category: "Home Improvement", count: 10 }, { category: "Roofing", count: 9 }, { category: "Home Remodel", count: 7 }, { category: "Solar Panel", count: 6 }, { category: "HVAC", count: 4 }] },
+      { department: "Midwest", categories: [{ category: "Home Improvement", count: 8 }, { category: "Roofing", count: 8 }, { category: "Home Remodel", count: 6 }, { category: "Solar Panel", count: 4 }, { category: "HVAC", count: 3 }] },
+      { department: "Southwest", categories: [{ category: "Home Improvement", count: 7 }, { category: "Roofing", count: 6 }, { category: "Home Remodel", count: 5 }, { category: "Solar Panel", count: 3 }, { category: "HVAC", count: 2 }] },
+      { department: "Pacific NW", categories: [{ category: "Home Improvement", count: 4 }, { category: "Roofing", count: 4 }, { category: "Home Remodel", count: 2 }, { category: "Solar Panel", count: 2 }, { category: "HVAC", count: 1 }] },
     ];
-    for (const p of products) {
-      await ctx.db.insert("product_mix", {
-        contractor_id: contractorId,
-        category: p.category,
-        count: p.count,
-        period: "2024",
-      });
+    for (const dept of productMixByDept) {
+      for (const p of dept.categories) {
+        await ctx.db.insert("product_mix", {
+          contractor_id: contractorId,
+          category: p.category,
+          count: p.count,
+          period: "2024",
+          department: dept.department,
+        });
+      }
     }
 
     // 8. Funding health
@@ -312,5 +329,94 @@ export const seed = internalMutation({
     }
 
     return { message: "Seed complete", contractorId };
+  },
+});
+
+// Reseed only product_mix and revenue_monthly with granular per-department data
+export const reseedFilterData = internalMutation({
+  args: {},
+  handler: async (ctx) => {
+    const contractor = await ctx.db.query("contractors").first();
+    if (!contractor) {
+      throw new Error("No contractor found. Run seed first.");
+    }
+    const contractorId = contractor._id;
+
+    // Delete existing product_mix rows
+    const existingProducts = await ctx.db
+      .query("product_mix")
+      .withIndex("by_contractor", (q) => q.eq("contractor_id", contractorId))
+      .collect();
+    for (const row of existingProducts) {
+      await ctx.db.delete(row._id);
+    }
+
+    // Delete existing revenue_monthly rows
+    const existingRevenue = await ctx.db
+      .query("revenue_monthly")
+      .withIndex("by_contractor", (q) => q.eq("contractor_id", contractorId))
+      .collect();
+    for (const row of existingRevenue) {
+      await ctx.db.delete(row._id);
+    }
+
+    // Insert 30 product_mix rows (6 departments × 5 categories)
+    const productMixByDept = [
+      { department: "West Coast", categories: [{ category: "Home Improvement", count: 14 }, { category: "Roofing", count: 10 }, { category: "Home Remodel", count: 9 }, { category: "Solar Panel", count: 8 }, { category: "HVAC", count: 5 }] },
+      { department: "Northeast", categories: [{ category: "Home Improvement", count: 12 }, { category: "Roofing", count: 11 }, { category: "Home Remodel", count: 8 }, { category: "Solar Panel", count: 5 }, { category: "HVAC", count: 4 }] },
+      { department: "Southeast", categories: [{ category: "Home Improvement", count: 10 }, { category: "Roofing", count: 9 }, { category: "Home Remodel", count: 7 }, { category: "Solar Panel", count: 6 }, { category: "HVAC", count: 4 }] },
+      { department: "Midwest", categories: [{ category: "Home Improvement", count: 8 }, { category: "Roofing", count: 8 }, { category: "Home Remodel", count: 6 }, { category: "Solar Panel", count: 4 }, { category: "HVAC", count: 3 }] },
+      { department: "Southwest", categories: [{ category: "Home Improvement", count: 7 }, { category: "Roofing", count: 6 }, { category: "Home Remodel", count: 5 }, { category: "Solar Panel", count: 3 }, { category: "HVAC", count: 2 }] },
+      { department: "Pacific NW", categories: [{ category: "Home Improvement", count: 4 }, { category: "Roofing", count: 4 }, { category: "Home Remodel", count: 2 }, { category: "Solar Panel", count: 2 }, { category: "HVAC", count: 1 }] },
+    ];
+    for (const dept of productMixByDept) {
+      for (const p of dept.categories) {
+        await ctx.db.insert("product_mix", {
+          contractor_id: contractorId,
+          category: p.category,
+          count: p.count,
+          period: "2024",
+          department: dept.department,
+        });
+      }
+    }
+
+    // Insert 72 revenue_monthly rows (6 departments × 12 months)
+    const monthlyTotals = [
+      { month: 1, actual_revenue: 165000 },
+      { month: 2, actual_revenue: 178000 },
+      { month: 3, actual_revenue: 195000 },
+      { month: 4, actual_revenue: 210000 },
+      { month: 5, actual_revenue: 225000 },
+      { month: 6, actual_revenue: 238000 },
+      { month: 7, actual_revenue: 215000 },
+      { month: 8, actual_revenue: 198000 },
+      { month: 9, actual_revenue: 220000 },
+      { month: 10, actual_revenue: 245000, forecast_revenue: 240000 },
+      { month: 11, actual_revenue: 230000, forecast_revenue: 235000 },
+      { month: 12, actual_revenue: 156700, forecast_revenue: 220000 },
+    ];
+    const deptRevenueShares: Record<string, number> = {
+      "West Coast": 0.246,
+      "Northeast": 0.199,
+      "Southeast": 0.180,
+      "Midwest": 0.147,
+      "Southwest": 0.135,
+      "Pacific NW": 0.092,
+    };
+    for (const m of monthlyTotals) {
+      for (const [dept, share] of Object.entries(deptRevenueShares)) {
+        await ctx.db.insert("revenue_monthly", {
+          contractor_id: contractorId,
+          year: 2024,
+          month: m.month,
+          actual_revenue: Math.round(m.actual_revenue * share),
+          forecast_revenue: m.forecast_revenue ? Math.round(m.forecast_revenue * share) : undefined,
+          department: dept,
+        });
+      }
+    }
+
+    return { message: "Reseed complete", productMixRows: 30, revenueMonthlyRows: 72 };
   },
 });

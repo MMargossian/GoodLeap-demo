@@ -13,30 +13,104 @@ export function useSalesData() {
   const salesData = useQuery(api.salesPerformance.getSalesData, available ? {} : "skip");
   const revenueMonthly = useQuery(api.salesPerformance.getRevenueMonthly, available ? {} : "skip");
   const departmentPerf = useQuery(api.salesPerformance.getDepartmentPerformance, available ? {} : "skip");
-  const topReps = useQuery(
-    api.salesPerformance.getTopReps,
-    available ? (filters.organization !== "all" ? { department: filters.organization } : {}) : "skip"
-  );
+  const topReps = useQuery(api.salesPerformance.getTopReps, available ? {} : "skip");
   const productMix = useQuery(api.salesPerformance.getProductMix, available ? {} : "skip");
 
-  const filteredDepartments = departmentPerf
-    ? filters.organization !== "all"
-      ? departmentPerf.filter((d) => d.department === filters.organization)
-      : departmentPerf
-    : null;
+  // Derive effective org filter: if a rep is selected, look up their department
+  let effectiveOrg = filters.organization;
+  if (filters.salesRep !== "all" && topReps) {
+    const rep = topReps.find((r) => r.rep_name === filters.salesRep);
+    if (rep) {
+      effectiveOrg = rep.department;
+    }
+  }
+  const orgActive = effectiveOrg !== "all";
+  const categoryActive = filters.productCategory !== "all";
 
-  const filteredProducts = productMix
-    ? filters.productCategory !== "all"
-      ? productMix.filter((p) => p.category === filters.productCategory)
-      : productMix
-    : null;
+  // Filter department performance by org
+  const filteredDepartments = departmentPerf
+    ? orgActive
+      ? departmentPerf.filter((d) => d.department === effectiveOrg)
+      : departmentPerf
+    : [];
+
+  // Filter top reps by effective org + specific rep name
+  const filteredReps = topReps
+    ? topReps.filter((r) => {
+        if (orgActive && r.department !== effectiveOrg) return false;
+        if (filters.salesRep !== "all" && r.rep_name !== filters.salesRep) return false;
+        return true;
+      })
+    : [];
+
+  // Filter product mix by department and category, then aggregate by category
+  const filteredProducts = (() => {
+    if (!productMix) return [];
+    let rows = productMix;
+    if (orgActive) {
+      rows = rows.filter((p) => p.department === effectiveOrg);
+    }
+    if (categoryActive) {
+      rows = rows.filter((p) => p.category === filters.productCategory);
+    }
+    // Aggregate by category (sum across departments)
+    if (!orgActive || rows.length === 0) {
+      const byCat = new Map<string, number>();
+      for (const r of rows) {
+        byCat.set(r.category, (byCat.get(r.category) ?? 0) + r.count);
+      }
+      return Array.from(byCat.entries()).map(([category, count]) => ({ category, count }));
+    }
+    return rows.map((r) => ({ category: r.category, count: r.count }));
+  })();
+
+  // Filter revenue monthly by department, then aggregate by month
+  const filteredRevenue = (() => {
+    if (!revenueMonthly) return [];
+    let rows = revenueMonthly;
+    if (orgActive) {
+      rows = rows.filter((r) => r.department === effectiveOrg);
+    }
+    // Aggregate by month (sum across departments)
+    if (!orgActive) {
+      const byMonth = new Map<number, { actual: number; forecast: number | undefined }>();
+      for (const r of rows) {
+        const existing = byMonth.get(r.month);
+        if (existing) {
+          existing.actual += r.actual_revenue;
+          if (r.forecast_revenue !== undefined) {
+            existing.forecast = (existing.forecast ?? 0) + r.forecast_revenue;
+          }
+        } else {
+          byMonth.set(r.month, {
+            actual: r.actual_revenue,
+            forecast: r.forecast_revenue,
+          });
+        }
+      }
+      return Array.from(byMonth.entries())
+        .sort(([a], [b]) => a - b)
+        .map(([month, data]) => ({
+          month,
+          year: 2024,
+          actual_revenue: data.actual,
+          forecast_revenue: data.forecast,
+        }));
+    }
+    return rows.map((r) => ({
+      month: r.month,
+      year: r.year,
+      actual_revenue: r.actual_revenue,
+      forecast_revenue: r.forecast_revenue,
+    }));
+  })();
 
   return {
     salesData: salesData ?? null,
-    revenueMonthly: revenueMonthly ?? [],
-    departmentPerf: filteredDepartments ?? [],
-    topReps: topReps ?? [],
-    productMix: filteredProducts ?? [],
+    revenueMonthly: filteredRevenue,
+    departmentPerf: filteredDepartments,
+    topReps: filteredReps,
+    productMix: filteredProducts,
     isLoading: available && salesData === undefined,
   };
 }
