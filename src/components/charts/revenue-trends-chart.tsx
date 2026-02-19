@@ -87,9 +87,14 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function RevenueTrendsChart({ period = "monthly" }: { period?: Period }) {
+interface RevenueTrendsChartProps {
+  period?: Period;
+  data?: { label: string; revenue: number }[];
+}
+
+export function RevenueTrendsChart({ period = "monthly", data: dataProp }: RevenueTrendsChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const data = dataByPeriod[period];
+  const data = dataProp ?? dataByPeriod[period];
 
   return (
     <ResponsiveContainer width="100%" height={300}>

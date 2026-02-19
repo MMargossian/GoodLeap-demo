@@ -108,7 +108,18 @@ function CustomXAxisTick({
   );
 }
 
-export function StageTimeChart() {
+interface StageTimeChartProps {
+  data?: { stage: string; contractor: number; similar: number }[];
+}
+
+export function StageTimeChart({ data }: StageTimeChartProps) {
+  const chartData = data
+    ? data.map((d) => {
+        const existing = stageTimeData.find((s) => s.stage === d.stage);
+        return { ...d, icon: existing?.icon || FileText };
+      })
+    : stageTimeData;
+
   return (
     <div>
       {/* Legend */}
@@ -124,7 +135,7 @@ export function StageTimeChart() {
       </div>
 
       <ResponsiveContainer width="100%" height={320}>
-        <BarChart data={stageTimeData} barCategoryGap="20%">
+        <BarChart data={chartData} barCategoryGap="20%">
           <CartesianGrid stroke="#f0f0f0" strokeDasharray="3 3" vertical={false} />
           <XAxis
             dataKey="stage"

@@ -60,6 +60,29 @@ function formatDiff(metricName: string, contractor: number, peer: number): { dif
 export default function BenchmarksPage() {
   const { benchmarks } = useBenchmarkData();
 
+  // Metric config for chart rendering (unit, max scale, direction)
+  const metricConfig: Record<string, { unit: string; max: number; lowerIsBetter: boolean }> = {
+    "Conversion Rate": { unit: "%", max: 50, lowerIsBetter: false },
+    "Pull-Through Rate": { unit: "%", max: 60, lowerIsBetter: false },
+    "Referral Conv.": { unit: "%", max: 50, lowerIsBetter: false },
+    "Repeat Customers": { unit: "%", max: 60, lowerIsBetter: false },
+    "Upsell Rate": { unit: "%", max: 40, lowerIsBetter: false },
+    "Avg Sales Cycle": { unit: "days", max: 60, lowerIsBetter: true },
+    "Target Attainment": { unit: "%", max: 100, lowerIsBetter: false },
+  };
+
+  const benchmarkChartData = benchmarks.length > 0
+    ? benchmarks.map((b) => {
+        const config = metricConfig[b.metric_name] ?? { unit: "%", max: 100, lowerIsBetter: false };
+        return {
+          metric: b.metric_name,
+          contractor: b.contractor_value,
+          peer: b.peer_value,
+          ...config,
+        };
+      })
+    : undefined;
+
   const benchmarkRows = benchmarks.length > 0
     ? benchmarks.map((b) => {
         const { diff, above } = formatDiff(b.metric_name, b.contractor_value, b.peer_value);
@@ -153,7 +176,7 @@ export default function BenchmarksPage() {
                 <CardTitle>Benchmarks &amp; Analysis</CardTitle>
               </CardHeader>
               <CardContent>
-                <BenchmarkComparisonChart />
+                <BenchmarkComparisonChart data={benchmarkChartData} />
                 <p className="mt-4 text-xs text-muted-foreground">
                   Based on comparison with similar contractors in your region
                 </p>

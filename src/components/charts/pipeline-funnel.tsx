@@ -17,9 +17,26 @@ const pipelineData = [
   { stage: "FUNDED", count: 51, dropPct: 19, icon: DollarSign },
 ];
 
-const maxCount = pipelineData[0].count;
+const iconMap: Record<string, typeof FileText> = {
+  SUBMISSIONS: FileText,
+  APPROVALS: CheckCircle,
+  "DOCS SENT": Send,
+  "NOTICE TO PROCEED (NTP)": Hammer,
+  FUNDED: DollarSign,
+};
 
-export function PipelineFunnel() {
+const maxCountDefault = pipelineData[0].count;
+
+interface PipelineFunnelProps {
+  data?: { stage: string; count: number; dropPct: number | null }[];
+}
+
+export function PipelineFunnel({ data }: PipelineFunnelProps) {
+  const chartData = data
+    ? data.map((d) => ({ ...d, icon: iconMap[d.stage] || FileText }))
+    : pipelineData;
+  const maxCount = chartData[0]?.count || maxCountDefault;
+
   return (
     <div className="space-y-4">
       {/* Total Funded stat */}
@@ -35,7 +52,7 @@ export function PipelineFunnel() {
 
       {/* Pipeline stages */}
       <div className="space-y-3">
-        {pipelineData.map((item) => {
+        {chartData.map((item) => {
           const progressPct = (item.count / maxCount) * 100;
           const Icon = item.icon;
 

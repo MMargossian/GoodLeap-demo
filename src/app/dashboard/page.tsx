@@ -63,7 +63,7 @@ function StatColumn({
 }
 
 export default function SalesPerformancePage() {
-  const { salesData } = useSalesData();
+  const { salesData, departmentPerf, productMix, revenueMonthly } = useSalesData();
 
   const revenue = salesData?.revenue ?? 2475700;
   const projects = salesData?.projects ?? 140;
@@ -90,6 +90,14 @@ export default function SalesPerformancePage() {
     cancellations,
     targetAttainment: `${targetAttainment}%`,
   };
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthlyChartData = revenueMonthly.length > 0
+    ? revenueMonthly.map((r) => ({ label: monthNames[r.month - 1] ?? `M${r.month}`, revenue: r.actual_revenue }))
+    : undefined;
+  const forecastChartData = revenueMonthly.length > 0
+    ? revenueMonthly.map((r) => ({ month: monthNames[r.month - 1] ?? `M${r.month}`, actual: r.actual_revenue, forecast: r.forecast_revenue ?? null }))
+    : undefined;
 
   const { insights, getInsightByType, isLoading, isRefreshing, refresh } = useAIInsights("sales", salesMetrics);
 
@@ -193,7 +201,7 @@ export default function SalesPerformancePage() {
                     <RevenueTrendsChart period="weekly" />
                   </TabsContent>
                   <TabsContent value="monthly" className="mt-4">
-                    <RevenueTrendsChart period="monthly" />
+                    <RevenueTrendsChart period="monthly" data={monthlyChartData} />
                   </TabsContent>
                   <TabsContent value="quarterly" className="mt-4">
                     <RevenueTrendsChart period="quarterly" />
@@ -219,7 +227,7 @@ export default function SalesPerformancePage() {
                 <CardDescription>Actual vs projected revenue</CardDescription>
               </CardHeader>
               <CardContent>
-                <RevenueForecastChart />
+                <RevenueForecastChart data={forecastChartData} />
                 <div className="mt-4 flex gap-6">
                   <div>
                     <p className="text-xs text-muted-foreground">Last 3-mo Avg</p>
@@ -284,7 +292,9 @@ export default function SalesPerformancePage() {
                 <CardDescription>Revenue by region</CardDescription>
               </CardHeader>
               <CardContent>
-                <DepartmentBarChart />
+                <DepartmentBarChart
+                  data={departmentPerf.length > 0 ? departmentPerf.map((d) => ({ department: d.department, revenue: d.revenue })) : undefined}
+                />
               </CardContent>
             </Card>
           </FadeIn>
@@ -295,7 +305,9 @@ export default function SalesPerformancePage() {
                 <CardDescription>Projects by category</CardDescription>
               </CardHeader>
               <CardContent>
-                <ProductMixChart />
+                <ProductMixChart
+                  data={productMix.length > 0 ? productMix.map((p) => ({ category: p.category, count: p.count })) : undefined}
+                />
               </CardContent>
             </Card>
           </FadeIn>

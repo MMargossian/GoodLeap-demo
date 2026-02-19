@@ -48,10 +48,16 @@ function ProgressBar({
   );
 }
 
-export function RecommendationBreakdown() {
+interface RecommendationBreakdownProps {
+  data?: { touchpoint: string; recommend: number; neutral: number; not_recommend: number }[];
+}
+
+export function RecommendationBreakdown({ data }: RecommendationBreakdownProps) {
+  const chartData = data ?? touchpointData;
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {touchpointData.map((item, cardIndex) => (
+      {chartData.map((item, cardIndex) => (
         <Card
           key={item.touchpoint}
           className="shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-0.5"

@@ -47,7 +47,7 @@ const MONTHS = [
 
 export default function FundingHealthPage() {
   const [period, setPeriod] = useState("December 2024");
-  const { fundingHealth, loanAmounts } = useFundingData();
+  const { fundingHealth, ficoDistribution, loanAmounts } = useFundingData();
 
   const approvalRate = fundingHealth?.approval_rate ?? 59.5;
   const pullThrough = fundingHealth?.sales_pull_through ?? 40.2;
@@ -145,7 +145,9 @@ export default function FundingHealthPage() {
                   Target Range: 650+
                 </Badge>
               </div>
-              <FicoChart />
+              <FicoChart
+                data={ficoDistribution.length > 0 ? ficoDistribution.map((f) => ({ range: f.fico_range, probability: f.approval_probability })) : undefined}
+              />
               <p className="text-xs text-muted-foreground mt-1">
                 Focus sales efforts on borrowers with FICO &gt; 650 for highest conversion
               </p>

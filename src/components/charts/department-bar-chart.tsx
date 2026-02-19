@@ -36,12 +36,17 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function DepartmentBarChart() {
+interface DepartmentBarChartProps {
+  data?: { department: string; revenue: number }[];
+}
+
+export function DepartmentBarChart({ data }: DepartmentBarChartProps) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const chartData = data ?? departmentData;
 
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={departmentData} layout="vertical">
+      <BarChart data={chartData} layout="vertical">
         <defs>
           <linearGradient id="deptGradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%" stopColor="#6B3FA0" stopOpacity={0.8} />

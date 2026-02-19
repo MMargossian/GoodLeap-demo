@@ -226,9 +226,7 @@ const defaultInsights: Record<string, AIInsight[]> = {
 };
 
 export function useAIInsights(section: string, metrics?: Record<string, unknown>) {
-  const [insights, setInsights] = useState<AIInsight[]>(
-    defaultInsights[section] || defaultInsights.sales
-  );
+  const [insights, setInsights] = useState<AIInsight[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const metricsRef = useRef(metrics);
@@ -259,6 +257,7 @@ export function useAIInsights(section: string, metrics?: Record<string, unknown>
       };
     } catch (error) {
       console.error("Failed to refresh AI insights:", error);
+      setInsights(defaultInsights[section] || defaultInsights.sales);
       return {
         source: "fallback",
         message: "Failed to connect to AI service.",

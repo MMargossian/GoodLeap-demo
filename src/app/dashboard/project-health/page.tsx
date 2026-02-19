@@ -55,6 +55,24 @@ export default function ProjectHealthPage() {
         .reduce((sum, s) => sum + s.avg_days, 0)).toFixed(1)
     : "12.6";
 
+  // Transform pipeline stages for funnel chart
+  const funnelData = pipelineStages.length > 0
+    ? pipelineStages.map((s, i) => ({
+        stage: s.stage.toUpperCase(),
+        count: s.count,
+        dropPct: i === 0 ? null : Math.round(((pipelineStages[i - 1].count - s.count) / pipelineStages[i - 1].count) * 100),
+      }))
+    : undefined;
+
+  // Transform pipeline stages for stage time chart
+  const stageTimeData = pipelineStages.length > 0
+    ? pipelineStages.map((s) => ({
+        stage: s.stage.toUpperCase(),
+        contractor: s.avg_days,
+        similar: s.similar_contractor_avg_days,
+      }))
+    : undefined;
+
   const projectMetrics = {
     avgDaysToSign,
     avgDaysSignToFund,
@@ -118,7 +136,7 @@ export default function ProjectHealthPage() {
                   PIPELINE PERFORMANCE
                 </span>
               </div>
-              <PipelineFunnel />
+              <PipelineFunnel data={funnelData} />
             </div>
 
             {/* Right half: Avg Time Per Stage */}
@@ -129,7 +147,7 @@ export default function ProjectHealthPage() {
                   AVG. TIME PER STAGE (DAYS)
                 </span>
               </div>
-              <StageTimeChart />
+              <StageTimeChart data={stageTimeData} />
             </div>
           </div>
         </CardContent>

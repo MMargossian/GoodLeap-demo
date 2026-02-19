@@ -124,7 +124,7 @@ export function HierarchyFilters() {
         <Button
           size="sm"
           className="bg-primary text-white hover:bg-primary/90 h-8"
-          onClick={() => toast("Selection saved")}
+          onClick={() => toast("Filters applied")}
         >
           <Bookmark className="mr-1.5 h-3.5 w-3.5" />
           Save Selection

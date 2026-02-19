@@ -43,10 +43,16 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function ProductMixChart() {
+interface ProductMixChartProps {
+  data?: { category: string; count: number }[];
+}
+
+export function ProductMixChart({ data }: ProductMixChartProps) {
+  const chartData = data ?? productData;
+
   return (
     <ResponsiveContainer width="100%" height={280}>
-      <BarChart data={productData} layout="vertical">
+      <BarChart data={chartData} layout="vertical">
         <defs>
           {gradientConfigs.map((g) => (
             <linearGradient key={g.id} id={g.id} x1="0" y1="0" x2="1" y2="0">
@@ -74,8 +80,8 @@ export function ProductMixChart() {
           animationDuration={1200}
           animationEasing="ease-out"
         >
-          {productData.map((_, index) => (
-            <Cell key={index} fill={`url(#${gradientConfigs[index].id})`} />
+          {chartData.map((_, index) => (
+            <Cell key={index} fill={`url(#${gradientConfigs[index % gradientConfigs.length].id})`} />
           ))}
         </Bar>
       </BarChart>

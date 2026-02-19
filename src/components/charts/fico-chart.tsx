@@ -29,11 +29,17 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function FicoChart() {
+interface FicoChartProps {
+  data?: { range: string; probability: number }[];
+}
+
+export function FicoChart({ data }: FicoChartProps) {
+  const chartData = data ?? ficoData;
+
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart
-        data={ficoData}
+        data={chartData}
         margin={{ top: 20, right: 20, left: 0, bottom: 5 }}
       >
         <defs>

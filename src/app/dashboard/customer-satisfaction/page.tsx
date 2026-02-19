@@ -162,7 +162,14 @@ export default function CustomerSatisfactionPage() {
               <CardTitle>Recommendation Breakdown by Touchpoint</CardTitle>
             </CardHeader>
             <CardContent>
-              <RecommendationBreakdown />
+              <RecommendationBreakdown
+                data={touchpoints.length > 0 ? touchpoints.map((t) => ({
+                  touchpoint: t.touchpoint,
+                  recommend: t.recommend_pct,
+                  neutral: t.neutral_pct,
+                  not_recommend: t.not_recommend_pct,
+                })) : undefined}
+              />
             </CardContent>
           </AnimatedCard>
         </FadeIn>

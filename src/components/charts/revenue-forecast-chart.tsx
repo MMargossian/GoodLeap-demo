@@ -48,10 +48,16 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-export function RevenueForecastChart() {
+interface RevenueForecastChartProps {
+  data?: { month: string; actual: number; forecast: number | null }[];
+}
+
+export function RevenueForecastChart({ data }: RevenueForecastChartProps) {
+  const chartData = data ?? forecastData;
+
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <ComposedChart data={forecastData}>
+      <ComposedChart data={chartData}>
         <defs>
           <linearGradient id="actualAreaGradient" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0%" stopColor="#7C3AED" stopOpacity={0.3} />
