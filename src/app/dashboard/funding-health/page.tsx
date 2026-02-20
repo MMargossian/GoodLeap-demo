@@ -29,21 +29,7 @@ import {
 import { useFundingData } from "@/hooks/useConvexData";
 import { AIInsightsSection } from "@/components/ai-insights-section";
 import { useAIInsights } from "@/hooks/useAIInsights";
-
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+import { MONTH_NAMES_FULL } from "@/lib/constants";
 
 export default function FundingHealthPage() {
   const [period, setPeriod] = useState("December 2024");
@@ -89,7 +75,7 @@ export default function FundingHealthPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {MONTHS.map((m) => (
+              {MONTH_NAMES_FULL.map((m) => (
                 <SelectItem key={m} value={`${m} 2024`}>
                   {m} 2024
                 </SelectItem>

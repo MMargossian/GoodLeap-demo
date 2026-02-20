@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/animated";
 import { useSalesData } from "@/hooks/useConvexData";
 import { useAIInsights } from "@/hooks/useAIInsights";
+import { MONTH_NAMES_SHORT } from "@/lib/constants";
 
 function StatColumn({
   title,
@@ -91,12 +92,11 @@ export default function SalesPerformancePage() {
     targetAttainment: `${targetAttainment}%`,
   };
 
-  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const monthlyChartData = revenueMonthly.length > 0
-    ? revenueMonthly.map((r) => ({ label: monthNames[r.month - 1] ?? `M${r.month}`, revenue: r.actual_revenue }))
+    ? revenueMonthly.map((r) => ({ label: MONTH_NAMES_SHORT[r.month - 1] ?? `M${r.month}`, revenue: r.actual_revenue }))
     : undefined;
   const forecastChartData = revenueMonthly.length > 0
-    ? revenueMonthly.map((r) => ({ month: monthNames[r.month - 1] ?? `M${r.month}`, actual: r.actual_revenue, forecast: r.forecast_revenue ?? null }))
+    ? revenueMonthly.map((r) => ({ month: MONTH_NAMES_SHORT[r.month - 1] ?? `M${r.month}`, actual: r.actual_revenue, forecast: r.forecast_revenue ?? null }))
     : undefined;
 
   const { insights, getInsightByType, isLoading, isRefreshing, refresh } = useAIInsights("sales", salesMetrics);
