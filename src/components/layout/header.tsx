@@ -10,13 +10,29 @@ export function Header() {
   const { toast } = useToast();
   const [generating, setGenerating] = useState(false);
 
-  const handleGenerateReport = () => {
+  const handleGenerateReport = async () => {
     setGenerating(true);
-    toast("Generating comprehensive report...");
-    setTimeout(() => {
+    toast("Collecting dashboard data...");
+
+    try {
+      const { collectReportData } = await import("@/lib/report-data");
+
+      const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+      const reportData = await collectReportData(convexUrl);
+
+      toast("Generating PDF report...");
+
+      const { generateReport } = await import("@/lib/pdf-report");
+      const doc = await generateReport(reportData);
+
+      doc.save("performance-report.pdf");
+      toast("Report downloaded successfully!");
+    } catch (error) {
+      console.error("Report generation failed:", error);
+      toast("Report generation failed. Please try again.");
+    } finally {
       setGenerating(false);
-      toast("Report generation requires backend integration. Coming soon!");
-    }, 2000);
+    }
   };
 
   return (
